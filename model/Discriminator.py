@@ -4,12 +4,12 @@
 
 import torch.nn as nn
 import torch.nn.init as init
-import torch.nn.utils as utils
-import torch.nn.functional as F
+# import torch.nn.utils as utils
+# import torch.nn.functional as F
 from .basic_layer import conv_down
 
 class DiscriminatorLinear(nn.Module):
-    def __init__(self, in_chn, ndf=64, slope=0.2):
+    def __init__(self, in_chn, ndf=32, slope=0.2):
         '''
         ndf: number of filters
         '''
@@ -42,8 +42,8 @@ class DiscriminatorLinear(nn.Module):
     def forward(self, x):
         feature = self.main(x)
         feature = feature.view(-1, self.ndf*32)
-        out = self.output(feature)
-        return out.view(-1)
+        out = nn.Sigmoid()(self.output(feature))
+        return out
 
     def _initialize(self):
         for m in self.modules():

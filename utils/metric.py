@@ -1,6 +1,7 @@
 
 import torch
-from skimage.measure import compare_psnr,compare_ssim
+# from skimage.measure import compare_psnr,compare_ssim
+from skimage import measure
 
 
 
@@ -21,7 +22,7 @@ def calculate_psnr(output_img, target_img):
     psnr = 0.0
     n = 0.0
     for im_idx in range(output_tf.shape[0]):
-        psnr += compare_psnr(target_tf[im_idx, ...],
+        psnr += measure.compare_psnr(target_tf[im_idx, ...],
                                              output_tf[im_idx, ...],
                                              data_range=255)
         n += 1.0
@@ -33,7 +34,7 @@ def calculate_ssim(output_img, target_img):
     ssim = 0.0
     n = 0.0
     for im_idx in range(output_tf.shape[0]):
-        ssim += compare_ssim(target_tf[im_idx, ...],
+        ssim += measure.compare_ssim(target_tf[im_idx, ...],
                                              output_tf[im_idx, ...],
                                              multichannel=True,
                                              data_range=255)

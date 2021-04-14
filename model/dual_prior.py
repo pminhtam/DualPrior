@@ -1,7 +1,7 @@
 import torch.nn as nn
 # from .DnCNN import DnCNN
 from .UNet import UNet
-import torch
+# import torch
 def weight_init_kaiming(net):
     for m in net.modules():
         if isinstance(m, nn.Conv2d):

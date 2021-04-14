@@ -4,7 +4,7 @@ from model.dual_prior import VDN
 from torch.utils.data import DataLoader
 from loss.loss import loss_fn
 import os
-from data.data_provider import SingleLoader
+from data.data_provider import SingleLoader_raw
 import torch.optim as optim
 from torch.optim import lr_scheduler
 import numpy as np
@@ -17,7 +17,7 @@ def train(args):
     # torch.set_num_threads(4)
     # torch.manual_seed(args.seed)
     # checkpoint = utility.checkpoint(args)
-    data_set = SingleLoader(noise_dir=args.noise_dir, gt_dir=args.gt_dir, image_size=args.image_size,noise_estimate=False)
+    data_set = SingleLoader_raw(noise_dir=args.noise_dir, gt_dir=args.gt_dir, image_size=args.image_size)
     data_loader = DataLoader(
         data_set,
         batch_size=args.batch_size,
@@ -33,8 +33,8 @@ def train(args):
     checkpoint_dir = args.checkpoint
     if not os.path.exists(checkpoint_dir):
         os.makedirs(checkpoint_dir)
-    model = VDN(in_channels=3).to(device)
-    model_dis = DiscriminatorLinear(in_chn=3).to(device)
+    model = VDN(in_channels=4).to(device)
+    model_dis = DiscriminatorLinear(in_chn=4).to(device)
     optimizer = optim.Adam(
         model.parameters(),
         lr=1e-4
@@ -83,18 +83,18 @@ def train(args):
             im_gt = im_gt.to(device)
             # print(im_noisy)
             # print(im_gt)
-            # print(sigmaMapEst)
+            # print(sigmaMapEst),noise_estimate=Fals
             # print(sigmaMapGt)
             for _ in range(2):
                 phi_Z = model(im_noisy)
                 # print(pred.size())
                 batch_size = len(im_noisy)
-                out_noise_1 = phi_Z[:batch_size//2,:3,:,:]
-                out_noise_2 = phi_Z[batch_size//2:,:3,:,:]
+                out_noise_1 = phi_Z[:batch_size//2,:4,:,:]
+                out_noise_2 = phi_Z[batch_size//2:,:4,:,:]
                 im_noise_1 = im_noisy[:batch_size//2,:,:,:]
                 im_noise_2 = im_noisy[batch_size//2:,:,:,:]
-                im_denoise_1 = phi_Z[:batch_size//2,3:,:,:]
-                im_denoise_2 = phi_Z[batch_size//2:,3:,:,:]
+                im_denoise_1 = phi_Z[:batch_size//2,4:,:,:]
+                im_denoise_2 = phi_Z[batch_size//2:,4:,:,:]
 
 
                 im_noise_1_fake = im_denoise_1 + out_noise_2
@@ -115,14 +115,14 @@ def train(args):
             for _ in range(4):
                 phi_Z = model(im_noisy)
                 batch_size = len(im_noisy)
-                out_noise_1 = phi_Z[:batch_size//2,:3,:,:]
-                out_noise_2 = phi_Z[batch_size//2:,:3,:,:]
+                out_noise_1 = phi_Z[:batch_size//2,:4,:,:]
+                out_noise_2 = phi_Z[batch_size//2:,:4,:,:]
                 im_noise_1 = im_noisy[:batch_size//2,:,:,:]
                 im_noise_2 = im_noisy[batch_size//2:,:,:,:]
                 im_denoise_phi_1 = im_noise_1 - out_noise_1
                 im_denoise_phi_2 = im_noise_2 - out_noise_2
-                im_denoise_1 = phi_Z[:batch_size//2,3:,:,:]
-                im_denoise_2 = phi_Z[batch_size//2:,3:,:,:]
+                im_denoise_1 = phi_Z[:batch_size//2,4:,:,:]
+                im_denoise_2 = phi_Z[batch_size//2:,4:,:,:]
 
                 im_noise_1_fake = im_denoise_1 + out_noise_2
                 im_noise_2_fake = im_denoise_2 + out_noise_1
@@ -175,17 +175,17 @@ def train(args):
 if __name__ == "__main__":
     # argparse
     parser = argparse.ArgumentParser(description='parameters for training')
-    # parser.add_argument('--noise_dir','-n', default='/home/dell/Downloads/noise', help='path to noise folder image')
-    parser.add_argument('--noise_dir','-n', default='../image/Noisy', help='path to noise folder image')
+    parser.add_argument('--noise_dir','-n', default='/home/dell/Downloads/noise_raw/split/', help='path to noise folder image')
+    # parser.add_argument('--noise_dir','-n', default='../image/Noisy', help='path to noise folder image')
     # parser.add_argument('--gt_dir', '-g' , default='/home/dell/Downloads/gt', help='path to gt folder image')
-    parser.add_argument('--gt_dir', '-g' , default='../image/Clean', help='path to gt folder image')
+    parser.add_argument('--gt_dir', '-g' , default='/home/dell/Downloads/gt_raw/split/', help='path to gt folder image')
     parser.add_argument('--image_size', '-sz' , default=128, type=int, help='size of image')
     parser.add_argument('--epoch', '-e' ,default=1000, type=int, help='batch size')
-    parser.add_argument('--batch_size','-bs' ,  default=64, type=int, help='batch size')
+    parser.add_argument('--batch_size','-bs' ,  default=2, type=int, help='batch size')
     parser.add_argument('--save_every','-se' , default=200, type=int, help='save_every')
     parser.add_argument('--loss_every', '-le' , default=10, type=int, help='loss_every')
     parser.add_argument('--restart','-r' ,  action='store_true', help='Whether to remove all old files and restart the training process')
-    parser.add_argument('--num_workers', '-nw', default=32, type=int, help='number of workers in data loader')
+    parser.add_argument('--num_workers', '-nw', default=2, type=int, help='number of workers in data loader')
     parser.add_argument('--checkpoint', '-ckpt', type=str, default='checkpoint/',
                         help='the checkpoint to eval')
     parser.add_argument('--load_type', "-l" ,default="best", type=str, help='Load type best_or_latest ')
